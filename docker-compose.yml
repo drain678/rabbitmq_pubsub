@@ -1,0 +1,37 @@
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  publisher:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./publisher/input.txt:/app/publisher/input.txt
+
+  consumer1:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    command: ["python", "consumer/consumer.py", "output1.txt"]
+    volumes:
+      - ./consumer/output1.txt:/app/consumer/output1.txt
+
+  consumer2:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    command: ["python", "consumer/consumer.py", "output2.txt"]
+    volumes:
+      - ./consumer/output2.txt:/app/consumer/output2.txt
